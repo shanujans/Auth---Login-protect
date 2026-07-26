@@ -5,7 +5,6 @@ from supabase import create_client, Client
 from supabase import AuthApiError
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
 
 load_dotenv()
 
@@ -26,7 +25,7 @@ async def get_current_user(
     if credentials is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "Access token required"},
+            detail="Access token required",
         )
     token = credentials.credentials
     try:
@@ -35,10 +34,5 @@ async def get_current_user(
     except AuthApiError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "Invalid or expired token"},
-        )
-    except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail={"error": "Invalid or expired token"},
+            detail="Invalid or expired token",
         )

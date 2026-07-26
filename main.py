@@ -1,9 +1,8 @@
-from fastapi import FastAPI, HTTPException, status, Header
-from typing import Optional
+from fastapi import FastAPI, HTTPException, status, Depends
 from pydantic import BaseModel
 from supabase import AuthApiError
 
-from auth import supabase
+from auth import supabase, get_current_user
 
 app = FastAPI(title="Auth API")
 
@@ -24,13 +23,12 @@ def public_info():
 
 
 @app.get("/protected/profile", status_code=status.HTTP_200_OK)
-def get_profile(authorization: Optional[str] = Header(None)):
-    if not authorization or not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access token required",
-        )
-    return {"message": "Token received but not yet verified", "token_prefix": authorization[:20]}
+def get_profile(user=Depends(get_current_user)):
+    return {
+        "id": user.id,
+        "email": user.email,
+        "created_at": user.created_at,
+    }
 
 
 @app.post("/auth/signup", status_code=status.HTTP_201_CREATED)
