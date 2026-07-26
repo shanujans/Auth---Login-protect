@@ -10,7 +10,11 @@ app = FastAPI(
     title="Auth API",
     description="Secure API with Supabase Auth — sign up, log in, log out, and protected routes.",
     version="1.0.0",
+    servers=[{"url": "http://localhost:8000", "description": "Local dev"}],
 )
+
+
+@app.exception_handler(HTTPException)
 
 
 @app.exception_handler(HTTPException)
