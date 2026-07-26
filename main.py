@@ -1,10 +1,25 @@
 from fastapi import FastAPI, HTTPException, status, Depends
+from fastapi.responses import JSONResponse
+from fastapi.requests import Request
 from pydantic import BaseModel
 from supabase import AuthApiError
 
 from auth import supabase, get_current_user
 
-app = FastAPI(title="Auth API")
+app = FastAPI(
+    title="Auth API",
+    description="Secure API with Supabase Auth — sign up, log in, log out, and protected routes.",
+    version="1.0.0",
+)
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    if isinstance(exc.detail, dict):
+        return JSONResponse(status_code=exc.status_code, content=exc.detail)
+    return JSONResponse(
+        status_code=exc.status_code, content={"error": exc.detail}
+    )
 
 
 class AuthBody(BaseModel):
@@ -28,6 +43,14 @@ def get_profile(user=Depends(get_current_user)):
         "id": user.id,
         "email": user.email,
         "created_at": user.created_at,
+    }
+
+
+@app.get("/protected/dashboard", status_code=status.HTTP_200_OK)
+def get_dashboard(user=Depends(get_current_user)):
+    return {
+        "message": f"Welcome {user.email}, this is your dashboard.",
+        "user_id": user.id,
     }
 
 
@@ -70,3 +93,9 @@ def login(body: AuthBody):
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid login credentials",
         )
+
+
+@app.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(user=Depends(get_current_user)):
+    supabase.auth.sign_out()
+    return None
